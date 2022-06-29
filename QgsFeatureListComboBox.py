@@ -1,7 +1,6 @@
-import sys
-from PyQt5.QtWidgets import QWidget, QApplication
-from qgis.core import QgsVectorLayerCache, QgsExpression
-from qgis.gui import (QgsFeatureListComboBox)
+from PyQt5.QtWidgets import QWidget
+from qgis.core import QgsExpression, QgsFeatureRequest
+from qgis.gui import QgsFeatureListComboBox
 from qgis.utils import iface
 
 def layer_change(): # Set to selected layer
@@ -9,15 +8,16 @@ def layer_change(): # Set to selected layer
     cbox_features.setSourceLayer(layer)
 
 def print_selected():
-    layer = iface.activeLayer()
-    print(cbox_features.displayExpression())
-    print(cbox_features.currentText())
-    # Work in Progress: Get Feature using QgsFeatureRequest
-    # column_name = cbox_features.displayExpression()
-    # row_value = cbox_features.currentText()
-    # expr = QgsExpression(f"{column_name}={row_value}")
-    # it = layer.getFeatures(QgsFeatureRequest(expr))
-    # print([i.id() for i in it])
+    layer = cbox_features.sourceLayer()
+    print(f'Im Using this field to list features in combo box: {cbox_features.displayExpression()}')
+    print(f'Selected feature name is {cbox_features.currentText()}')
+    print('Now search me using QgsFeatureRequest') 
+    find_me(layer, cbox_features.displayExpression(), cbox_features.currentText())
+
+def find_me(layer, field_name, feature_value):
+    selection = layer.getFeatures(QgsFeatureRequest(QgsExpression(f"{field_name} = '{feature_value}'")))
+    for feat in selection:
+        print(feat.attributes())
 
 selected_layer = iface.activeLayer()
 
@@ -32,7 +32,6 @@ cbox_features.setAllowNull(False)
 
 # On change Events
 iface.layerTreeView().currentLayerChanged.connect(layer_change) # If change selected layer
-cbox_features.identifierValueChanged.connect(print_selected)
-
+cbox_features.currentFeatureChanged.connect(print_selected) # If change selected feature
 
 new_dialog.show()
